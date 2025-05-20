@@ -16,6 +16,7 @@ final class APIManager {
     internal init() {}
     
     func fetchCities() async throws -> [City] {
+
         guard let url = URL(string: baseURL) else {
             throw URLError(.badURL)
         }
@@ -32,23 +33,14 @@ final class APIManager {
         
         return cities
     }
-    
-    func saveCities(_ cities: [City], context: ModelContext) {
-        for city in cities {
-            let existing = try? context.fetch(FetchDescriptor<CityEntity>(predicate: #Predicate { $0.id == city.id }))
-            if existing?.isEmpty == false {
-                print("Ciudad duplicada (ID: \(city.id)) — no se guarda.")
-                continue
+
+    func deleteAllCities(context: ModelContext) {
+        let descriptor = FetchDescriptor<CityItem>()
+        if let allCities = try? context.fetch(descriptor) {
+            for city in allCities {
+                context.delete(city)
             }
-            
-            let newCity = CityEntity(
-                country: city.country,
-                name: city.name,
-                id: city.id,
-                lat: city.coord.lat,
-                lon: city.coord.lon
-            )
-            context.insert(newCity)
+            print("Todas las ciudades eliminadas.")
         }
     }
 }

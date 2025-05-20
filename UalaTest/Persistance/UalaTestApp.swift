@@ -11,8 +11,8 @@ import SwiftUI
 struct UalaTestApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            CitiesListView(viewModel: CitiesListViewModel())
         }
-        .modelContainer(for: CityEntity.self)
+        .modelContainer(for: CityItem.self)
     }
 }

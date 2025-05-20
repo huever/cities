@@ -2,14 +2,14 @@
 //  CityItem.swift
 //  UalaTest
 //
-//  Created by Luciano Putignano on 17/05/2025.
+//  Created by Luciano Putignano on 20/05/2025.
 //
 
 import SwiftData
 import Foundation
 
 @Model
-class CityEntity {
+class CityItem {
     var country: String
     var name: String
     @Attribute(.unique) var id: Int
