@@ -85,7 +85,9 @@ struct CitiesListView: View {
                     }
                 }
                 .onAppear {
-                    viewModel.setContext(context)
+                    if viewModel.totalCities == 0 {
+                        viewModel.setContext(context)
+                    }
                 }
             }
             detail: {
