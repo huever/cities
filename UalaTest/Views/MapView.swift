@@ -13,16 +13,16 @@ struct MapView: View {
     let city: City
 
     @State private var region = MKCoordinateRegion()
-    @State private var ciudadSeleccionada: City? = nil
+    @State private var selectedCity: City? = nil
 
     var body: some View {
 
         ZStack(alignment: .bottom) {
             NavigationStack {
-                Map(coordinateRegion: $region, annotationItems: [city]) { ciudad in
-                    MapAnnotation(coordinate: ciudad.getCoord()) {
+                Map(coordinateRegion: $region, annotationItems: [city]) { city in
+                    MapAnnotation(coordinate: city.getCoord()) {
                         Button(action: {
-                            ciudadSeleccionada = ciudad
+                            selectedCity = city
                         }) {
                             VStack {
                                 Image(systemName: "pin.fill")
@@ -36,15 +36,15 @@ struct MapView: View {
                     updateRegion(city: newCity)
                 }
                 .edgesIgnoringSafeArea(.all)
-                .sheet(item: $ciudadSeleccionada) { ciudad in
-                    CiudadDetalleView(ciudad: ciudad)
+                .sheet(item: $selectedCity) { ciudad in
+                    CityDetailView(ciudad: ciudad)
                         .presentationDetents([.fraction(0.25), .medium])
                         .presentationBackground(.thinMaterial)
                 }
             }
 
             Button(action: {
-                ciudadSeleccionada = city
+                selectedCity = city
             }, label: {
                 Text("Más Información")
                     .font(.title2)
@@ -68,7 +68,7 @@ struct MapView: View {
     }
 }
 
-struct CiudadDetalleView: View {
+struct CityDetailView: View {
     let ciudad: City
 
     var body: some View {
@@ -78,7 +78,7 @@ struct CiudadDetalleView: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
 
-                Text("\(ciudad.country) \(flag(country: ciudad.country))")
+                Text("\(ciudad.country) \(Utils.flag(country: ciudad.country))")
                     .font(.title)
                     .fontWeight(.medium)
 
@@ -94,15 +94,6 @@ struct CiudadDetalleView: View {
             .padding()
             Spacer()
         }
-    }
-
-    func flag(country:String) -> String {
-        let base : UInt32 = 127397
-        var s = ""
-        for v in country.unicodeScalars {
-            s.unicodeScalars.append(UnicodeScalar(base + v.value)!)
-        }
-        return String(s)
     }
 }
 

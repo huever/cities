@@ -26,35 +26,13 @@ struct CitiesListView: View {
                         let city = viewModel.cities[index]
 
                         NavigationLink(destination: MapView(city: City(from: city))) {
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text("\(city.name) - \(city.country)").font(.headline)
-                                    Text("lat: \(city.lat), lon: \(city.lon)")
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
-                                }
-
-                                Spacer()
-
-                                Button {
-                                    viewModel.toggleFavorite(for: city)
-                                } label: {
-                                    Image(systemName: city.isFavorite ? "star.fill" : "star")
-                                        .foregroundColor(city.isFavorite ? .yellow : .gray)
-                                }
-                                .buttonStyle(.borderless)
-                            }
-                            .padding(.vertical, 8)
-
+                            CityRowView(city: city, toggleFavorite: {
+                                viewModel.toggleFavorite(for: city)
+                            })
                             .onAppear {
                                 if index == viewModel.cities.count - 1 && viewModel.cities.count < viewModel.totalCities {
                                     viewModel.loadMore()
                                 }
-                            }
-
-                            if viewModel.isLoading {
-                                ProgressView()
-                                    .frame(maxWidth: .infinity)
                             }
                         }
                         .navigationTitle("Cities")
@@ -115,24 +93,15 @@ struct CitiesListView: View {
             }
             .navigationSplitViewStyle(.balanced)
 
-            VStack {
-                Text("No hay resultados")
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                Text("Sincronice antes de continuar")
-                    .font(.title)
-                    .foregroundColor(.secondary)
-            }.isHidden(!viewModel.cities.isEmpty)
+            EmptyBannerView(
+                emptyCities: viewModel.totalCities == 0,
+                emptyResults: viewModel.cities.isEmpty
+            )
 
-            ZStack {
-                Text("Sincronizando... \(Int(viewModel.progress * 100))%")
-                ProgressView(value: viewModel.progress)
-                    .padding(.horizontal, 48)
-                    .padding(.top, 32)
-            }
-            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
-            .background(.thinMaterial)
-            .isHidden(!viewModel.isImporting)
+            SyncProgressView(
+                progress: viewModel.progress,
+                isImporting: viewModel.isImporting
+            )
         }
     }
 }
