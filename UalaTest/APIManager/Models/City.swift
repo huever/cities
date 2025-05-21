@@ -6,13 +6,14 @@
 //
 
 import Foundation
+import MapKit
 
-struct Coordinate: Codable {
+struct Coordinate: Codable, Hashable {
     let lon: Double
     let lat: Double
 }
 
-struct City: Codable {
+struct City: Codable, Hashable, Identifiable {
     let country: String
     let name: String
     let id: Int
@@ -23,5 +24,27 @@ struct City: Codable {
         case name
         case id = "_id"
         case coord
+    }
+
+    func getCoord() -> CLLocationCoordinate2D {
+		return CLLocationCoordinate2D(latitude: coord.lat, longitude: coord.lon)
+    }
+
+    init(country: String, name: String, id: Int, coord: Coordinate) {
+        self.country = country
+        self.name = name
+        self.id = id
+        self.coord = coord
+    }
+
+    init(from cityItem: CityItem) {
+        id = cityItem.id
+        name = cityItem.name
+        country = cityItem.country
+        coord = Coordinate(lon: cityItem.lon, lat: cityItem.lat)
+    }
+
+    static func defaultCity() -> City {
+        .init(country: "Ar", name: "Mendoza", id: 1, coord: Coordinate(lon: -68.816667, lat: -32.916667))
     }
 }

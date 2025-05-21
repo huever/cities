@@ -16,45 +16,58 @@ struct CitiesListView: View {
     @State private var searchText = ""
     @State private var showFavoritesOnly = false
     @State private var cities: [CityItem] = []
+    @State private var path = NavigationPath()
 
     var body: some View {
-        NavigationView {
+        NavigationSplitView(columnVisibility: .constant(.all)) {
             List {
                 ForEach(viewModel.cities.indices, id: \.self) { index in
                     let city = viewModel.cities[index]
 
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("\(city.name) - \(city.country)").font(.headline)
-                            Text("Coord: lat: \(city.lat), long: \(city.lon)")
-                                .font(.subheadline)
-                                .foregroundColor(.gray)
-                        }
-
-                        Spacer()
-
-                        Button {
-                            city.isFavorite.toggle()
-                            Task {
-                                viewModel.fetchData()
+                    NavigationLink(destination: MapView(city: City(from: city))) {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("\(city.name) - \(city.country)").font(.headline)
+                                Text("lat: \(city.lat), lon: \(city.lon)")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
                             }
-                        } label: {
-                            Image(systemName: city.isFavorite ? "star.fill" : "star")
-                                .foregroundColor(city.isFavorite ? .yellow : .gray)
-                        }
-                        .buttonStyle(.borderless)
-                    }
-                    .onAppear {
-                        if index == viewModel.cities.count - 1 && viewModel.cities.count < viewModel.totalCities {
-                            viewModel.loadMore()
-                        }
-                    }
 
-                    if viewModel.isLoading {
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
+                            Spacer()
+
+                            Button {
+                                viewModel.toggleFavorite(for: city)
+                            } label: {
+                                Image(systemName: city.isFavorite ? "star.fill" : "star")
+                                    .foregroundColor(city.isFavorite ? .yellow : .gray)
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                        .padding(.vertical, 8)
+
+                        .onAppear {
+                            if index == viewModel.cities.count - 1 && viewModel.cities.count < viewModel.totalCities {
+                                viewModel.loadMore()
+                            }
+                        }
+
+                        if viewModel.isLoading {
+                            ProgressView()
+                                .frame(maxWidth: .infinity)
+                        }
                     }
+                    .navigationTitle("Cities")
                 }
+                .listRowSeparator(.hidden)
+                .listRowBackground(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color.mint.opacity(0.1))
+                        .padding(.vertical, 4)
+                )
+            }
+
+            .navigationDestination(for: CityItem.self) { city in
+                MapView(city: City(from: city))
             }
             .isHidden(viewModel.isLoading)
             .searchable(text: $viewModel.searchText, prompt: "Buscar ciudad")
@@ -67,7 +80,7 @@ struct CitiesListView: View {
             .navigationTitle("Ciudades")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Descargar") {
+                    Button("Sincronizar") {
                         Task {
                             do {
                                 try await viewModel.fetchAndSaveCities()
@@ -81,20 +94,18 @@ struct CitiesListView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Toggle(isOn: $viewModel.showFavoritesOnly) {
                         Image(systemName: viewModel.showFavoritesOnly ? "star.fill" : "star")
+                            .padding(.trailing, 8)
                     }
-                    .toggleStyle(.button)
-                }
-
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Borrar Todo") {
-                        viewModel.deleteAllCities()
-                    }
+                    .tint(.black)
                 }
             }
             .onAppear {
                 viewModel.setContext(context)
             }
         }
-
+        detail: {
+            MapView(city: City.defaultCity())
+        }
+        .navigationSplitViewStyle(.balanced)
     }
 }

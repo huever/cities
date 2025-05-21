@@ -43,12 +43,6 @@ final class CitiesListViewModel: ObservableObject {
         totalCount = (try? context.fetchCount(descriptor)) ?? 0
     }
 
-    func deleteAllCities() {
-        APIManager.shared.deleteAllCities(context: context)
-        loadTotalCount()
-        fetchData(reset: true)
-    }
-
     @MainActor
     func loadMore() {
         guard !isLoading, cities.count < totalCount else { return }
@@ -64,12 +58,15 @@ final class CitiesListViewModel: ObservableObject {
     func fetchData(reset: Bool = false) {
 
         if reset {
-            currentOffset = 0
-            cities.removeAll()
+            self.currentOffset = 0
+            self.cities.removeAll()
         }
 
         var descriptor = FetchDescriptor<CityItem>(
-            sortBy: [SortDescriptor(\.name, order: .forward)]
+            sortBy: [
+                SortDescriptor(\.country, order: .forward),
+                SortDescriptor(\.name, order: .forward)
+            ]
         )
 
         descriptor.predicate = #Predicate { city in
@@ -80,13 +77,21 @@ final class CitiesListViewModel: ObservableObject {
         descriptor.fetchOffset = currentOffset
 
         if let result = try? context.fetch(descriptor) {
-            cities += result
+            DispatchQueue.main.async {
+                self.cities += result
+            }
         }
     }
 
     func toggleFavorite(for city: CityItem) {
         city.isFavorite.toggle()
-        fetchData()
+        if self.context.hasChanges {
+            do {
+                try context?.save()
+            } catch {
+                
+            }
+        }
     }
 
     func fetchAndSaveCities() async throws {
