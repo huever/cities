@@ -19,93 +19,120 @@ struct CitiesListView: View {
     @State private var path = NavigationPath()
 
     var body: some View {
-        NavigationSplitView(columnVisibility: .constant(.all)) {
-            List {
-                ForEach(viewModel.cities.indices, id: \.self) { index in
-                    let city = viewModel.cities[index]
+        ZStack {
+            NavigationSplitView(columnVisibility: .constant(.all)) {
+                List {
+                    ForEach(viewModel.cities.indices, id: \.self) { index in
+                        let city = viewModel.cities[index]
 
-                    NavigationLink(destination: MapView(city: City(from: city))) {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text("\(city.name) - \(city.country)").font(.headline)
-                                Text("lat: \(city.lat), lon: \(city.lon)")
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
+                        NavigationLink(destination: MapView(city: City(from: city))) {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text("\(city.name) - \(city.country)").font(.headline)
+                                    Text("lat: \(city.lat), lon: \(city.lon)")
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+                                }
+
+                                Spacer()
+
+                                Button {
+                                    viewModel.toggleFavorite(for: city)
+                                } label: {
+                                    Image(systemName: city.isFavorite ? "star.fill" : "star")
+                                        .foregroundColor(city.isFavorite ? .yellow : .gray)
+                                }
+                                .buttonStyle(.borderless)
+                            }
+                            .padding(.vertical, 8)
+
+                            .onAppear {
+                                if index == viewModel.cities.count - 1 && viewModel.cities.count < viewModel.totalCities {
+                                    viewModel.loadMore()
+                                }
                             }
 
-                            Spacer()
-
-                            Button {
-                                viewModel.toggleFavorite(for: city)
-                            } label: {
-                                Image(systemName: city.isFavorite ? "star.fill" : "star")
-                                    .foregroundColor(city.isFavorite ? .yellow : .gray)
-                            }
-                            .buttonStyle(.borderless)
-                        }
-                        .padding(.vertical, 8)
-
-                        .onAppear {
-                            if index == viewModel.cities.count - 1 && viewModel.cities.count < viewModel.totalCities {
-                                viewModel.loadMore()
+                            if viewModel.isLoading {
+                                ProgressView()
+                                    .frame(maxWidth: .infinity)
                             }
                         }
-
-                        if viewModel.isLoading {
-                            ProgressView()
-                                .frame(maxWidth: .infinity)
-                        }
+                        .navigationTitle("Cities")
                     }
-                    .navigationTitle("Cities")
-                }
-                .listRowSeparator(.hidden)
-                .listRowBackground(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color.mint.opacity(0.1))
-                        .padding(.vertical, 4)
-                )
-            }
-
-            .navigationDestination(for: CityItem.self) { city in
-                MapView(city: City(from: city))
-            }
-            .isHidden(viewModel.isLoading)
-            .searchable(text: $viewModel.searchText, prompt: "Buscar ciudad")
-            .onChange(of: viewModel.searchText) {
-                viewModel.fetchData(reset: true)
-            }
-            .onChange(of: viewModel.showFavoritesOnly) {
-                viewModel.fetchData(reset: true)
-            }
-            .navigationTitle("Ciudades")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Sincronizar") {
-                        Task {
-                            do {
-                                try await viewModel.fetchAndSaveCities()
-                            } catch {
-                                print("Error: \(error)")
-                            }
-                        }
-                    }
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(Color.white)
+                            .padding(.all, 4)
+                            .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 2)
+                    )
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .listRowSpacing(4)
                 }
 
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Toggle(isOn: $viewModel.showFavoritesOnly) {
-                        Image(systemName: viewModel.showFavoritesOnly ? "star.fill" : "star")
-                            .padding(.trailing, 8)
+                .navigationDestination(for: CityItem.self) { city in
+                    MapView(city: City(from: city))
+                }
+                .isHidden(viewModel.isLoading)
+                .searchable(text: $viewModel.searchText, prompt: "Buscar ciudad")
+                .onChange(of: viewModel.searchText) {
+                    viewModel.fetchData(reset: true)
+                }
+                .onChange(of: viewModel.showFavoritesOnly) {
+                    viewModel.fetchData(reset: true)
+                }
+                .navigationTitle("Ciudades")
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("Sincronizar...") {
+                            Task {
+                                do {
+                                    try await viewModel.fetchAndSaveCities()
+                                } catch {
+                                    print("Error: \(error)")
+                                }
+                            }
+                        }
                     }
-                    .tint(.black)
+
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button {
+                            viewModel.showFavoritesOnly.toggle()
+                            viewModel.fetchData(reset: true)
+                        } label: {
+                            Image(systemName: viewModel.showFavoritesOnly ? "star.fill" : "star")
+                                .padding(.trailing, 8)
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                }
+                .onAppear {
+                    viewModel.setContext(context)
                 }
             }
-            .onAppear {
-                viewModel.setContext(context)
+            detail: {
+                MapView(city: City.defaultCity())
             }
+            .navigationSplitViewStyle(.balanced)
+
+            VStack {
+                Text("No hay resultados")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                Text("Sincronice antes de continuar")
+                    .font(.title)
+                    .foregroundColor(.secondary)
+            }.isHidden(!viewModel.cities.isEmpty)
+
+            ZStack {
+                Text("Sincronizando... \(Int(viewModel.progress * 100))%")
+                ProgressView(value: viewModel.progress)
+                    .padding(.horizontal, 48)
+                    .padding(.top, 32)
+            }
+            .frame(minWidth: 0, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+            .background(.thinMaterial)
+            .isHidden(!viewModel.isImporting)
         }
-        detail: {
-            MapView(city: City.defaultCity())
-        }
-        .navigationSplitViewStyle(.balanced)
     }
 }

@@ -32,4 +32,8 @@ class CityItem {
         self.lon = lon
         self.isFavorite = isFavorite
     }
+
+    static func defaultCity() -> CityItem {
+        .init(country: "AR", name: "Mendoza", id: 1, lat: -32.889698, lon: -68.844576)
+    }
 }

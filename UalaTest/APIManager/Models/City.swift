@@ -45,6 +45,6 @@ struct City: Codable, Hashable, Identifiable {
     }
 
     static func defaultCity() -> City {
-        .init(country: "Ar", name: "Mendoza", id: 1, coord: Coordinate(lon: -68.816667, lat: -32.916667))
+        .init(country: "AR", name: "Mendoza", id: 1, coord: Coordinate(lon: -68.844576, lat: -32.889698))
     }
 }

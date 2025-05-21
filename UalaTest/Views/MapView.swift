@@ -11,10 +11,8 @@ import MapKit
 struct MapView: View {
 
     let city: City
-    @State var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 0.0, longitude: 0.0),
-        span: MKCoordinateSpan(latitudeDelta: 10, longitudeDelta: 10)
-    )
+
+    @State private var region = MKCoordinateRegion()
     @State private var ciudadSeleccionada: City? = nil
 
     var body: some View {
@@ -34,6 +32,9 @@ struct MapView: View {
                         }
                     }
                 }
+                .onChange(of: city) { _, newCity in
+                    updateRegion(city: newCity)
+                }
                 .edgesIgnoringSafeArea(.all)
                 .sheet(item: $ciudadSeleccionada) { ciudad in
                     CiudadDetalleView(ciudad: ciudad)
@@ -45,7 +46,7 @@ struct MapView: View {
             Button(action: {
                 ciudadSeleccionada = city
             }, label: {
-                Text("Detalles")
+                Text("Más Información")
                     .font(.title2)
                     .fontWeight(.bold)
             })
@@ -55,11 +56,15 @@ struct MapView: View {
             .padding()
         }
         .onAppear {
-            self.region = MKCoordinateRegion(
-                center: city.getCoord(),
-                span: MKCoordinateSpan(latitudeDelta: 0.25, longitudeDelta: 0.25)
-            )
+            updateRegion(city: city)
         }
+    }
+
+    private func updateRegion(city: City) {
+        self.region = MKCoordinateRegion(
+            center: city.getCoord(),
+            span: MKCoordinateSpan(latitudeDelta: 0.25, longitudeDelta: 0.25)
+        )
     }
 }
 
@@ -73,21 +78,31 @@ struct CiudadDetalleView: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
 
-                Text(ciudad.country)
+                Text("\(ciudad.country) \(flag(country: ciudad.country))")
                     .font(.title)
                     .fontWeight(.medium)
 
-                Text("Latitude: \(ciudad.coord.lat)")
+                Text("Latitud: \(ciudad.coord.lat)")
                     .font(.title2)
 
-                Text("Longitude: \(ciudad.coord.lon)")
+                Text("Longitud: \(ciudad.coord.lon)")
                     .font(.title2)
 
             }
+            .frame(height: 200)
             .background(Color.clear)
             .padding()
             Spacer()
         }
+    }
+
+    func flag(country:String) -> String {
+        let base : UInt32 = 127397
+        var s = ""
+        for v in country.unicodeScalars {
+            s.unicodeScalars.append(UnicodeScalar(base + v.value)!)
+        }
+        return String(s)
     }
 }
 
