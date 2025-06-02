@@ -28,6 +28,10 @@ final class UalaTestUITests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
+        let favoritesButton = app.buttons["favorite-button"]
+        XCTAssertTrue(favoritesButton.exists)
+        favoritesButton.tap()
+
         // Use XCTAssert and related functions to verify your tests produce the correct results.
     }
 

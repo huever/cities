@@ -40,7 +40,7 @@ struct CitiesListView: View {
                     .listRowSeparator(.hidden)
                     .listRowBackground(
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Color.white)
+                            .fill(Color("CellBackground"))
                             .padding(.all, 4)
                             .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 2)
                     )
@@ -82,6 +82,7 @@ struct CitiesListView: View {
                                 .padding(.trailing, 8)
                         }
                         .buttonStyle(.borderless)
+                        .accessibilityIdentifier("favorite-button")
                     }
                 }
                 .onAppear {
